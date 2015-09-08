@@ -17,6 +17,7 @@ import Ember from 'ember';
 //	}.property('farm','server','id','secret'),
 //});
 
+var flickrApiKey = 'b9568ec3553177a03a3457adf92e81d2';
 var PhotoCollection = Ember.ArrayProxy.extend(Ember.SortableMixin, {
 	sortProperties: ['dates.taken'],
 	sortAscending: false,
@@ -37,6 +38,21 @@ export default Ember.Controller.extend({
 			return photo.get('title').match(rx) || photo.get('owner.username').match(rx);
 		});
 	}.property('photos.@each','searchField'),
+	init: function(){
+		this._super.apply(this, arguments);
+		var apiKey = flickrApiKey;
+		var host = 'https://api.flickr.com/services/rest/';
+		var method = "flickr.tags.getHotlist";
+		var requestURL = host + "?method="+method + "&api_key="+apiKey+"&count=75&format=json&nojsoncallback=1";
+		var t = this;
+		Ember.$.getJSON(requestURL, function(data){
+			//callback for successfully completed requests
+			console.log(data);
+			data.hottags.tag.map(function(tag) {
+				t.get('tagList').pushObject(tag._content);
+			});
+		});
+	},
 	actions: {
 		search: function () {
 			this.get('photos').content.clear();
@@ -44,7 +60,7 @@ export default Ember.Controller.extend({
 			this.send('getPhotos',this.get('tagSearchField'));
 		},
 		getPhotos: function(tag){
-			var apiKey = '17e007fe58b70f25cfe08295d6dbcedc';
+			var apiKey = flickrApiKey;
 			var host = 'https://api.flickr.com/services/rest/';
 			var method = "flickr.photos.search";
 			var requestURL = host + "?method="+method + "&api_key="+apiKey+"&tags="+tag+"&format=json&nojsoncallback=1";
@@ -55,7 +71,7 @@ export default Ember.Controller.extend({
 				//make secondary requests to geta all of the photo information
 				data.photos.photo.map(function(photoitem) {//iterate over each photo
 					var infoRequestURL = host + "?method="+"flickr.photos.getInfo" +"&api_key="+apiKey+ "&photo_id="+photoitem.id+"&format=json&nojsoncallback=1";
-					Ember.$getJSON(infoRequestURL, function(item){
+					Ember.$.getJSON(infoRequestURL, function(item){
 						var photo = item.photo;
 						var tags = photo.tags.tag.map(function(tagitem){
 							return tagitem._content;
@@ -80,25 +96,12 @@ export default Ember.Controller.extend({
 			});
 		},
 		clicktag: function(tag){
+			console.log('hi I am working')
 			this.set('tagSearchField', tag);
 			this.get('photos').content.clear();
 			this.store.unloadAll('photo');
 			this.send('getPhotos',tag);
 		},
-		init: function(){
-			this._super.apply(this, arguments);
-			var apiKey = '17e007fe58b70f25cfe08295d6dbcedc';
-			var host = 'https://api.flickr.com/services/rest/';
-			var method = "flickr.tags.getHotlist";
-			var requestURL = host + "?method="+method + "&api_key="+apiKey+"&count=75&format=json&nojsoncallback=1";
-			var t = this;
-			Ember.$.getJSON(requestURL, function(data){
-				//callback for successfully completed requests
-				console.log(data);
-				data.hottags.tag.map(function(tag) {
-					t.get('taglist').pushObject(tag._content);
-				});
-			});
-		}
+		
 	}
 });
