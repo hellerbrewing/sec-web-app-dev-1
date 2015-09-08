@@ -18,8 +18,8 @@ import Ember from 'ember';
 //});
 
 var PhotoCollection = Ember.ArrayProxy.extend(Ember.SortableMixin, {
-	sortProperties: ['title'],
-	sortAscending: true,
+	sortProperties: ['dates.taken'],
+	sortAscending: false,
 	content: [],
 });
 
@@ -34,7 +34,7 @@ export default Ember.Controller.extend({
 		var photos = this.get('photos');
 
 		return photos.filter(function(photo){
-			return photo.get('title').match(rx) || photo.get('username').match(rx);
+			return photo.get('title').match(rx) || photo.get('owner.username').match(rx);
 		});
 	}.property('photos.@each','searchField'),
 	actions: {
@@ -46,25 +46,36 @@ export default Ember.Controller.extend({
 		getPhotos: function(tag){
 			var apiKey = '17e007fe58b70f25cfe08295d6dbcedc';
 			var host = 'https://api.flickr.com/services/rest/';
-			var method = "flickr.tags.getClusterPhotos";
-			var requestURL = host + "?method="+method + "&api_key="+apiKey+"&tag="+tag+"&format=json&nojsoncallback=1";
+			var method = "flickr.photos.search";
+			var requestURL = host + "?method="+method + "&api_key="+apiKey+"&tags="+tag+"&format=json&nojsoncallback=1";
 			var photos = this.get('photos');
 			var t = this;
-			Ember.$.getJSON(requestURL, function(data){//callback for successfully completed requests
-				console.log(data);
-				data.photos.photo.map(function(photo) {
-					var newPhotoItem = t.store.createRecord('photo',{
-						title: photo.title,
-						username: photo.username,
-						//flickr extra data
-						owner: photo.owner,
-						//flickr url data
-						id: photo.id,
-						farm: photo.farm,
-						secret: photo.secret,
-						server: photo.server,
+			Ember.$.getJSON(requestURL, function(data){
+				//callback for successfully completed requests
+				//make secondary requests to geta all of the photo information
+				data.photos.photo.map(function(photoitem) {//iterate over each photo
+					var infoRequestURL = host + "?method="+"flickr.photos.getInfo" +"&api_key="+apiKey+ "&photo_id="+photoitem.id+"&format=json&nojsoncallback=1";
+					Ember.$getJSON(infoRequestURL, function(item){
+						var photo = item.photo;
+						var tags = photo.tags.tag.map(function(tagitem){
+							return tagitem._content;
+						});
+						var newPhotoItem = t.store.createRecord('photo',{
+							title: photo.title._content,
+							dates: photo.dates,
+							owner: photo.owner,
+							description: photo.description._content,
+							link: photo.urls.url[0]._content,
+							views: photo.view,
+							tags: tags,
+							//flickr url data
+							id: photo.id,
+							farm: photo.farm,
+							secret: photo.secret,
+							server: photo.server,
+						});
+						photos.pushObject(newPhotoItem);
 					});
-					photos.pushObject(newPhotoItem);
 				});
 			});
 		},
