@@ -28,6 +28,7 @@ export default Ember.Controller.extend({
 	photos: PhotoCollection.create(),
 		searchField: '',
 		tagSearchfield: '',
+		filteredPhotosLoaded: false,
 		tagList: ['hi','cheese'],
 	filteredPhotos: function () {
 		var filter = this.get('searhcField');
@@ -55,6 +56,7 @@ export default Ember.Controller.extend({
 	},
 	actions: {
 		search: function () {
+			this.set('loading', true);
 			this.get('photos').content.clear();
 			this.store.unloadAll('photo');
 			this.send('getPhotos',this.get('tagSearchField'));
@@ -96,12 +98,13 @@ export default Ember.Controller.extend({
 			});
 		},
 		clicktag: function(tag){
-			console.log('hi I am working')
-			this.set('tagSearchField', tag);
+			this.set('tagSearchField',tag);
+			this.set('loading',false);
+			this.set('filteredPhotosLoaded',false);
 			this.get('photos').content.clear();
 			this.store.unloadAll('photo');
 			this.send('getPhotos',tag);
-		},
-		
+		}
 	}
 });
+//console.log('hi I am working')
