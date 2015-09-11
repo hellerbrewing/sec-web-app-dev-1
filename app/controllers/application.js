@@ -28,7 +28,9 @@ export default Ember.Controller.extend({
 	photos: PhotoCollection.create(),
 		searchField: '',
 		tagSearchfield: '',
-		filteredPhotosLoaded: false,
+		filteredPhotosLoaded: function(){
+			return this.get('filteredPhotos').length >0;
+		}.property('filteredPhotos.length'),
 		tagList: ['hi','cheese'],
 	filteredPhotos: function () {
 		var filter = this.get('searhcField');
@@ -84,7 +86,7 @@ export default Ember.Controller.extend({
 							owner: photo.owner,
 							description: photo.description._content,
 							link: photo.urls.url[0]._content,
-							views: photo.view,
+							views: photo.views,
 							tags: tags,
 							//flickr url data
 							id: photo.id,
@@ -93,14 +95,15 @@ export default Ember.Controller.extend({
 							server: photo.server,
 						});
 						photos.pushObject(newPhotoItem);
+						this.set('loading',false);
 					});
 				});
 			});
 		},
 		clicktag: function(tag){
 			this.set('tagSearchField',tag);
-			this.set('loading',false);
-			this.set('filteredPhotosLoaded',false);
+			this.set('loading',true);
+			//this.set('filteredPhotosLoaded',false);
 			this.get('photos').content.clear();
 			this.store.unloadAll('photo');
 			this.send('getPhotos',tag);

@@ -24,14 +24,15 @@
 			<li class="list-group-item">
 				<div class="media">
 					<div class="media-left media-middle">
-						<a href="{{photo.link}}" target="_blank">
-							<img class="media-object feed-img" src={{photo.url}} />
-						</a>
-					Taken: {{photo.humanReadableDate}}<br>
-					By: <a href={{photo.ownerurl}} target="_blank">{{photo.owner.username}}</a><br>
+						{{light-box href=photo.url
+							data-lightbox="test"
+							data-title=photo.title
+							data-class="media-object feed-img"}}
+						Taken: <a href={{photo.link}}>{{photo.humanReadableDate}}<br></a>
+						By: <a href={{photo.ownerurl}} target="_blank">{{photo.owner.username}}</a><br>
 					</div>
 					<div class="media-body">
-						<h4 class="media-handling">{{photo.title}} ({{photo.views}} Views)</h4>
+						<h4 class="media-heading">{{photo.title}} ({{photo.views}} Views)</h4>
 						{{{photo.description}}}
 					</div>
 				</div>
@@ -49,8 +50,10 @@
 		</ul>
 	{{else}}
 		{{#liquid-if loading use="toDown"}}
+			{{debugger}}
 			<img src="../page-loading.gif" class="img-responsive center-block"/>
 		{{else}}
+			{{debugger}}
 			<div class="jumbotron">
 				<h1>myproject</h1>
 				<p>Created by Steve Heller</p/>
